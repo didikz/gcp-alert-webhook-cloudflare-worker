@@ -48,22 +48,37 @@ Ensure you have the following installed:
 
 ### Configuration
 
-Before deployment or local development, you need to configure your Telegram credentials.
+This project uses secrets to handle your Telegram credentials securely.
 
-1.  **Open `wrangler.toml`**:
+#### For Production (Deployment)
 
-    ```toml
-    name = "gcp-webhook-alert-service"
-    main = "src/index.ts"
-    compatibility_date = "2024-02-28" # Or your desired compatibility date
+You need to set the `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as secrets for your Cloudflare Worker. Run the following commands in your terminal:
 
-    [vars]
-    TELEGRAM_BOT_TOKEN = "your-telegram-bot-token" # Replace with your actual bot token
-    TELEGRAM_CHAT_ID = "your-telegram-chat-id"     # Replace with your actual chat ID
+```bash
+npx wrangler secret put TELEGRAM_BOT_TOKEN
+```
+Wrangler will prompt you to enter your bot token.
+
+```bash
+npx wrangler secret put TELEGRAM_CHAT_ID
+```
+Wrangler will prompt you to enter your chat ID.
+
+You can get your Telegram Bot Token from BotFather on Telegram. You can get your chat ID by forwarding a message from the target chat to a bot like `@RawDataBot` or `@getidsbot`.
+
+#### For Local Development
+
+When running locally, Wrangler uses a `.dev.vars` file to load environment variables.
+
+1.  **Create a `.dev.vars` file** in the root of the project.
+2.  **Add your credentials** to the file:
+
+    ```
+    TELEGRAM_BOT_TOKEN="your-telegram-bot-token"
+    TELEGRAM_CHAT_ID="your-telegram-chat-id"
     ```
 
-2.  **Replace `your-telegram-bot-token`** with the HTTP API token you received from BotFather.
-3.  **Replace `your-telegram-chat-id`** with the ID of the Telegram chat where the bot should send messages. You can get your chat ID by forwarding a message from the target chat to a bot like `@RawDataBot` or `@getidsbot`.
+3.  **Replace the placeholder values** with your actual token and chat ID. This file is included in `.gitignore` and should not be committed to version control.
 
 ## Local Development
 
@@ -78,7 +93,7 @@ You can test the worker locally before deploying it to Cloudflare.
     This will usually expose the worker on `http://localhost:8787`.
 
 2.  **Send a test webhook:**
-    You can use `curl` or a tool like Postman to send a sample Google Cloud alert JSON payload to `http://localhost:8787/webhook`. Ensure your local Telegram bot can receive messages.
+    You can use `curl` or a tool like Postman to send a sample Google Cloud alert JSON payload to `http://localhost:8787/webhook`.
 
 ### Running Tests
 

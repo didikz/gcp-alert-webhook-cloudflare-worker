@@ -63,7 +63,7 @@ To deploy the worker to your Cloudflare account, use the following command:
 npm run deploy
 ```
 
-Before deploying, make sure to update the `wrangler.toml` file with your Telegram bot token and chat ID.
+Before deploying, make sure you have set your `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as secrets.
 
 # Development Conventions
 
@@ -77,7 +77,7 @@ All new features and bug fixes should be accompanied by tests. The tests are loc
 
 ## Environment Variables
 
-The worker uses the following environment variables, which are configured in the `wrangler.toml` file:
+The worker uses the following environment variables. For production, they should be set as secrets. For local development, they should be in a `.dev.vars` file:
 
 -   `TELEGRAM_BOT_TOKEN`: Your Telegram bot token.
 -   `TELEGRAM_CHAT_ID`: The ID of the Telegram chat where you want to send the alerts.
