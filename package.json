@@ -1,0 +1,21 @@
+{
+  "name": "gcp-webhook-alert-service",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240222.0",
+    "msw": "^1.2.1",
+    "typescript": "^5.0.4",
+    "vitest": "1.3.0",
+    "wrangler": "^4.67.0"
+  },
+  "dependencies": {
+    "itty-router": "^4.0.22"
+  }
+}
