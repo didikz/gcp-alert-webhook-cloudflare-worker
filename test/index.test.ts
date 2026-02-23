@@ -95,7 +95,6 @@ describe('GCP Webhook to Telegram', () => {
         expect(body.text).toContain('*Summary:* Error rate for my\\-function is high');
         expect(body.text).toContain('- *Resource:* `my\\-function`');
         expect(body.text).toContain('- *Project:* `test\\-project`');
-        // Check for UTC time format
         expect(body.text).toContain('*Started:* 3/15/2023, 1:20:00 PM');
         return HttpResponse.json({ ok: true });
       })
@@ -127,9 +126,6 @@ describe('GCP Webhook to Telegram', () => {
     server.use(
       http.post('https://api.telegram.org/botyour-telegram-bot-token/sendMessage', async ({request}) => {
         const body = await request.json();
-        // The timestamp 1678886400 is 2023-03-15 13:20:00 UTC.
-        // In Asia/Jakarta (UTC+7), it should be 20:20:00.
-        // toLocaleString('en-US') for this is '3/15/2023, 8:20:00 PM'
         expect(body.text).toContain('*Started:* 3/15/2023, 8:20:00 PM');
         return HttpResponse.json({ ok: true });
       })
@@ -194,7 +190,7 @@ describe('GCP Webhook to Telegram', () => {
       incident: {
         ...mockAlert.incident,
         state: 'CLOSED',
-        ended_at: 1678890000, // Some time after started_at
+        ended_at: 1678890000,
       },
     };
 
@@ -230,8 +226,6 @@ describe('GCP Webhook to Telegram', () => {
   });
 
   it('should handle alerts with missing properties gracefully', async () => {
-    // This alert is missing many properties that are required by the GcpAlert interface.
-    // We cast it to GcpAlert to test the robustness of our formatting function.
     const sparseAlert = {
       version: '1.2',
       incident: {
@@ -269,6 +263,105 @@ describe('GCP Webhook to Telegram', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
+    expect(json.success).toBe(true);
+  });
+
+  it('should use a custom template when provided', async () => {
+    const customTemplate = 'Alert: {{summary}} for {{resource_name}}';
+    server.use(
+      http.post('https://api.telegram.org/botyour-telegram-bot-token/sendMessage', async ({request}) => {
+        const body = await request.json();
+        expect(body.text).toBe('Alert: Error rate for my\\-function is high for my\\-function');
+        return HttpResponse.json({ ok: true });
+      })
+    );
+
+    const request = new Request('http://localhost/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mockAlert),
+    });
+
+    const env: Env = {
+      TELEGRAM_BOT_TOKEN: 'your-telegram-bot-token',
+      TELEGRAM_CHAT_ID: 'your-telegram-chat-id',
+      MESSAGE_TEMPLATE_OPEN: customTemplate,
+    };
+
+    const response = await worker.fetch(request, env, {} as any);
+    expect(response.status).toBe(200);
+  });
+});
+
+describe('Webhook Authentication', () => {
+  const authEnv: Env = {
+    TELEGRAM_BOT_TOKEN: 'your-telegram-bot-token',
+    TELEGRAM_CHAT_ID: 'your-telegram-chat-id',
+    AUTH_USERNAME: 'testuser',
+    AUTH_PASSWORD: 'testpassword',
+  };
+
+  it('should return 401 if no credentials are provided', async () => {
+    const request = new Request('http://localhost/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mockAlert),
+    });
+
+    const response = await worker.fetch(request, authEnv, {} as any);
+    expect(response.status).toBe(401);
+    expect(response.headers.get('WWW-Authenticate')).toBe('Basic realm="gcp-webhook-alert-service"');
+  });
+
+  it('should return 401 if credentials are malformed', async () => {
+      const request = new Request('http://localhost/webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic malformed'
+        },
+        body: JSON.stringify(mockAlert),
+      });
+
+      const response = await worker.fetch(request, authEnv, {} as any);
+      expect(response.status).toBe(401);
+      const body = await response.text();
+      expect(body).toBe('Unauthorized: Malformed credentials');
+    });
+
+  it('should return 401 if incorrect credentials are provided', async () => {
+    const request = new Request('http://localhost/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa('wrong:user')}`,
+      },
+      body: JSON.stringify(mockAlert),
+    });
+
+    const response = await worker.fetch(request, authEnv, {} as any);
+    expect(response.status).toBe(401);
+  });
+
+  it('should succeed if correct credentials are provided', async () => {
+    server.use(
+      http.post('https://api.telegram.org/botyour-telegram-bot-token/sendMessage', async () => {
+        return HttpResponse.json({ ok: true });
+      })
+    );
+
+    const request = new Request('http://localhost/webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa('testuser:testpassword')}`,
+      },
+      body: JSON.stringify(mockAlert),
+    });
+
+    const response = await worker.fetch(request, authEnv, {} as any);
+    expect(response.status).toBe(200);
+    const json = await response.json();
     expect(json.success).toBe(true);
   });
 });

@@ -75,6 +75,12 @@ The project uses TypeScript and follows standard TypeScript and Cloudflare Worke
 
 All new features and bug fixes should be accompanied by tests. The tests are located in the `test` directory and should be written using `vitest`.
 
+## Development Philosophy
+
+-   **Minimalist Commenting**: Use comments sparingly. They should explain the *why* behind complex logic or non-obvious design choices, not the *what* that is already clear from the code.
+-   **Proactive Code Review**: After completing a coding task, always perform a self-review to identify potential bugs, security concerns, or performance issues before considering the task complete.
+-   **Clarify Before Coding**: For complex features, propose a clear implementation plan and seek agreement before writing code. This ensures alignment and prevents rework.
+
 ## Environment Variables
 
 The worker uses the following environment variables. For production, they should be set as secrets. For local development, they should be in a `.dev.vars` file:
