@@ -1,6 +1,12 @@
-import { Router, json, status } from 'itty-router';
-import { formatGcpAlert } from './format';
+import { Router, json } from 'itty-router';
+import { formatGcpAlert, GcpAlert } from './format';
 import { sendTelegramMessage } from './telegram';
+
+export interface Env {
+	TELEGRAM_BOT_TOKEN: string;
+	TELEGRAM_CHAT_ID: string;
+	TIMEZONE?: string;
+}
 
 const router = Router();
 
@@ -8,22 +14,23 @@ router.get('/', () => {
   return json({ status: 'healthy' });
 });
 
-router.post('/webhook', async (request, env) => {
+router.post('/webhook', async (request: Request, env: Env) => {
   console.log('Received webhook request.');
   try {
-    const alert = await request.json();
-    const message = formatGcpAlert(alert);
+    const alert = await request.json<GcpAlert>();
+    const message = formatGcpAlert(alert, env.TIMEZONE);
     console.log('Sending message to Telegram...');
     await sendTelegramMessage(message, env.TELEGRAM_BOT_TOKEN, env.TELEGRAM_CHAT_ID);
     return json({ success: true });
   } catch (error) {
     console.error(error);
-    return json({ success: false, error: error.message }, { status: 500 });
+    const e = error as Error;
+    return json({ success: false, error: e.message }, { status: 500 });
   }
 });
 
 router.all('*', () => new Response('Not Found.', { status: 404 }));
 
 export default {
-  fetch: router.handle,
+  fetch: (request: Request, env: Env, ctx: ExecutionContext) => router.handle(request, env, ctx),
 };

@@ -52,21 +52,24 @@ export interface GcpAlert {
     return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
   }
   
-  export function formatGcpAlert(alert: GcpAlert): string {
+  export function formatGcpAlert(alert: GcpAlert, timezone?: string): string {
     const { incident } = alert;
-    const startedAt = new Date(incident.started_at * 1000).toLocaleString();
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: timezone || 'UTC',
+    };
+    const startedAt = new Date(incident.started_at * 1000).toLocaleString('en-US', options);
   
     if (incident.state.toUpperCase() === 'OPEN') {
       return `
-  🚨 *GCP Alert: ${escapeMarkdown(incident.policy_name)}* 🚨
+  🚨 *GCP Alert: ${escapeMarkdown(incident.policy_name ?? 'N/A')}* 🚨
   
-  *Summary:* ${escapeMarkdown(incident.summary)}
+  *Summary:* ${escapeMarkdown(incident.summary ?? 'N/A')}
   
   *Details:*
   - *State:* 🚨 OPEN
-  - *Condition:* ${escapeMarkdown(incident.condition_name)}
-  - *Resource:* \`${escapeMarkdown(incident.resource_name)}\`
-  - *Project:* \`${escapeMarkdown(incident.scoping_project_id)}\`
+  - *Condition:* ${escapeMarkdown(incident.condition_name ?? 'N/A')}
+  - *Resource:* \`${escapeMarkdown(incident.resource_name ?? 'N/A')}\`
+  - *Project:* \`${escapeMarkdown(incident.scoping_project_id ?? 'N/A')}\`
   
   *Timestamps:*
   - *Started:* ${startedAt}
@@ -74,17 +77,17 @@ export interface GcpAlert {
   [View Incident](${incident.url})
   `;
     } else {
-      const endedAt = incident.ended_at ? new Date(incident.ended_at * 1000).toLocaleString() : 'N/A';
+      const endedAt = incident.ended_at ? new Date(incident.ended_at * 1000).toLocaleString('en-US', options) : 'N/A';
   
       return `
-  ✅ *GCP Alert Resolved: ${escapeMarkdown(incident.policy_name)}* ✅
+  ✅ *GCP Alert Resolved: ${escapeMarkdown(incident.policy_name ?? 'N/A')}* ✅
   
-  *Summary:* ${escapeMarkdown(incident.summary)}
+  *Summary:* ${escapeMarkdown(incident.summary ?? 'N/A')}
   
   *Details:*
   - *State:* ✅ RESOLVED
-  - *Resource:* \`${escapeMarkdown(incident.resource_name)}\`
-  - *Project:* \`${escapeMarkdown(incident.scoping_project_id)}\`
+  - *Resource:* \`${escapeMarkdown(incident.resource_name ?? 'N/A')}\`
+  - *Project:* \`${escapeMarkdown(incident.scoping_project_id ?? 'N/A')}\`
   
   *Timestamps:*
   - *Started:* ${startedAt}

@@ -52,7 +52,9 @@ This project uses secrets to handle your Telegram credentials securely.
 
 #### For Production (Deployment)
 
-You need to set the `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` as secrets for your Cloudflare Worker. Run the following commands in your terminal:
+You need to set the `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and optionally `TIMEZONE` as secrets for your Cloudflare Worker. The `TIMEZONE` variable allows you to customize the timezone used for timestamps in alert messages. If not set, timestamps will default to UTC.
+
+Run the following commands in your terminal:
 
 ```bash
 npx wrangler secret put TELEGRAM_BOT_TOKEN
@@ -63,6 +65,11 @@ Wrangler will prompt you to enter your bot token.
 npx wrangler secret put TELEGRAM_CHAT_ID
 ```
 Wrangler will prompt you to enter your chat ID.
+
+```bash
+npx wrangler secret put TIMEZONE
+```
+Wrangler will prompt you to enter your preferred timezone, e.g., `Asia/Jakarta`. This is optional; if left unset, UTC will be used.
 
 You can get your Telegram Bot Token from BotFather on Telegram. You can get your chat ID by forwarding a message from the target chat to a bot like `@RawDataBot` or `@getidsbot`.
 
@@ -76,6 +83,7 @@ When running locally, Wrangler uses a `.dev.vars` file to load environment varia
     ```
     TELEGRAM_BOT_TOKEN="your-telegram-bot-token"
     TELEGRAM_CHAT_ID="your-telegram-chat-id"
+    TIMEZONE="Asia/Jakarta" # Optional: Set your preferred timezone, e.g., 'America/New_York', 'Europe/London'. Defaults to UTC if not set.
     ```
 
 3.  **Replace the placeholder values** with your actual token and chat ID. This file is included in `.gitignore` and should not be committed to version control.
