@@ -34,3 +34,4 @@ router.all('*', () => new Response('Not Found.', { status: 404 }));
 export default {
   fetch: (request: Request, env: Env, ctx: ExecutionContext) => router.handle(request, env, ctx),
 };
+

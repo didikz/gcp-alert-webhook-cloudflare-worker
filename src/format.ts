@@ -96,4 +96,5 @@ export interface GcpAlert {
   [View Incident](${incident.url})
   `;
     }
-  }  
+  }
+  
