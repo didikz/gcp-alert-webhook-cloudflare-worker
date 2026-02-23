@@ -156,5 +156,46 @@ describe('GCP Webhook to Telegram', () => {
     expect(response.status).toBe(200);
     expect(json.success).toBe(true);
   });
+
+  it('should send a resolved message when the alert is closed', async () => {
+    const closedAlert = {
+      ...mockAlert,
+      incident: {
+        ...mockAlert.incident,
+        state: 'CLOSED',
+        ended_at: 1678890000, // Some time after started_at
+      },
+    };
+
+    server.use(
+      rest.post('https://api.telegram.org/botyour-telegram-bot-token/sendMessage', async (req, res, ctx) => {
+        const body = await req.json();
+        expect(body.chat_id).toBe('your-telegram-chat-id');
+        expect(body.text).toContain('✅ *GCP Alert Resolved: Function Error Rate* ✅');
+        expect(body.text).toContain('*Summary:* Error rate for my\\-function is high');
+        expect(body.text).toContain('- *State:* ✅ RESOLVED');
+        expect(body.text).not.toContain('- *Condition:*');
+        expect(body.text).toContain('- *Ended:*');
+        return res(ctx.json({ ok: true }));
+      })
+    );
+
+    const request = new Request('http://localhost/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(closedAlert),
+    });
+
+    const env = {
+      TELEGRAM_BOT_TOKEN: 'your-telegram-bot-token',
+      TELEGRAM_CHAT_ID: 'your-telegram-chat-id',
+    };
+
+    const response = await worker.fetch(request, env, {} as any);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.success).toBe(true);
+  });
 });
 

@@ -54,18 +54,35 @@ export interface GcpAlert {
   
   export function formatGcpAlert(alert: GcpAlert): string {
     const { incident } = alert;
-    const state = incident.state === 'OPEN' ? '🚨' : '✅';
     const startedAt = new Date(incident.started_at * 1000).toLocaleString();
-    const endedAt = incident.ended_at ? new Date(incident.ended_at * 1000).toLocaleString() : 'N/A';
   
-    return `
+    if (incident.state.toUpperCase() === 'OPEN') {
+      return `
   🚨 *GCP Alert: ${escapeMarkdown(incident.policy_name)}* 🚨
   
   *Summary:* ${escapeMarkdown(incident.summary)}
   
   *Details:*
-  - *State:* ${state} ${incident.state}
+  - *State:* 🚨 OPEN
   - *Condition:* ${escapeMarkdown(incident.condition_name)}
+  - *Resource:* \`${escapeMarkdown(incident.resource_name)}\`
+  - *Project:* \`${escapeMarkdown(incident.scoping_project_id)}\`
+  
+  *Timestamps:*
+  - *Started:* ${startedAt}
+  
+  [View Incident](${incident.url})
+  `;
+    } else {
+      const endedAt = incident.ended_at ? new Date(incident.ended_at * 1000).toLocaleString() : 'N/A';
+  
+      return `
+  ✅ *GCP Alert Resolved: ${escapeMarkdown(incident.policy_name)}* ✅
+  
+  *Summary:* ${escapeMarkdown(incident.summary)}
+  
+  *Details:*
+  - *State:* ✅ RESOLVED
   - *Resource:* \`${escapeMarkdown(incident.resource_name)}\`
   - *Project:* \`${escapeMarkdown(incident.scoping_project_id)}\`
   
@@ -75,4 +92,5 @@ export interface GcpAlert {
   
   [View Incident](${incident.url})
   `;
+    }
   }  
