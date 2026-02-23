@@ -98,6 +98,7 @@ export function formatGcpAlert(
     const { incident } = alert;
     const options: Intl.DateTimeFormatOptions = {
         timeZone: timezone || 'UTC',
+        timeZoneName: 'short',
     };
     const startedAt = new Date(incident.started_at * 1000).toLocaleString('en-US', options);
 
